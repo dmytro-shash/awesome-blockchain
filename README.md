@@ -37,10 +37,10 @@ Blockchain contains
 * **target**: hash of new blocks has to satisfy the difficulty constraint, which is to be less than a target value
 * **blocks**: a list of all blocks included in the blockchain
 
----
+
 We encapsulate the proceeding and adding transactions
 and blocks using `Arc<Mutex<obj>>` so that we can control the order of adding to transaction pool and blockchain
 respectively.
----
+
 
 ## API interaction
