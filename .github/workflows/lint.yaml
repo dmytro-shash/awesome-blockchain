@@ -20,7 +20,7 @@ jobs:
       - run: rustup component add rustfmt
       - uses: actions-rs/cargo@v1
         with:
-          command: cd blockchain && fmt
+          command: fmt
           args: --all -- --check
 
   clippy:
