@@ -1,4 +1,3 @@
-
 on:
   push:
     branches:
@@ -21,7 +20,8 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: --all -- --check
+          args: --manifest-path ./blockchain/Cargo.toml --all -- --check
+
 
   clippy:
     name: Clippy
@@ -36,5 +36,5 @@ jobs:
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features
+          args: --manifest-path ./blockchain/Cargo.toml -- -A clippy::too-many-arguments -D warnings
           name: Clippy Output
