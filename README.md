@@ -1,4 +1,4 @@
-# PoW Blockchain Test Assignment
+# PoW Blockchain Test Assignment 🦒
 
 ## General information
 
