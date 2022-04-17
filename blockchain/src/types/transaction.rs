@@ -1,11 +1,8 @@
-use crate::types::AccountId;
+use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Transaction {
-    from: AccountId,
-    to: AccountId,
-    amount: u128
+    pub sender: String,
+    pub recipient: String,
+    pub amount: u64,
 }
-
-
-
-
