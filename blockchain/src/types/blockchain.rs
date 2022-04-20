@@ -24,17 +24,17 @@ pub enum BlockchainError {
     InvalidDifficulty,
 }
 
-// Struct that holds all the blocks in the blockhain
+// Struct that holds all the blocks in the blockchain
 // Multiple threads can read/write concurrently to the list of blocks
 #[derive(Debug, Clone)]
 pub struct Blockchain {
-    pub target: u32,
+    pub difficulty: u32,
     blocks: SyncedBlockVec,
 }
 
 impl Blockchain {
     // Creates a new blockchain with a genesis block
-    pub fn new(target: u32) -> Blockchain {
+    pub fn new(difficulty: u32) -> Blockchain {
         let genesis_block = Blockchain::create_genesis_block();
 
         // add the genesis block to the synced vec of blocks
@@ -43,7 +43,7 @@ impl Blockchain {
         let synced_blocks = Arc::new(Mutex::new(blocks));
 
         Blockchain {
-            target,
+            difficulty,
             blocks: synced_blocks,
         }
     }
@@ -82,7 +82,7 @@ impl Blockchain {
         }
 
         // check that the target is correct
-        if !block.hash.starts_with(&"0".repeat(self.target as usize)) {
+        if !block.hash.starts_with(&"0".repeat(self.difficulty as usize)) {
             return Err(BlockchainError::InvalidDifficulty.into());
         }
 
@@ -95,8 +95,6 @@ impl Blockchain {
     fn create_genesis_block() -> Block {
         let mut block = Block::new(0, 0, None, vec![]);
 
-        // to easily sync multiple nodes in a network, the genesis blocks must match
-        // so we clear the timestamp so the hash of the genesis block is predictable
         block.timestamp = 0;
         block.hash = block.calculate_hash();
 
@@ -114,15 +112,12 @@ mod tests {
     fn is_valid_genesis_block() {
         let blockchain = Blockchain::new(NO_TARGET);
 
-        // check that a new blockchain has one and only one block
         let blocks = blockchain.get_all_blocks();
         assert_eq!(blocks.len(), 1);
 
-        // check that the last block is in the blockchain
         let block = blockchain.get_last_block();
         assert_eq!(block.hash, blocks[0].hash);
 
-        // check that the genesis block has valid values
         assert_eq!(block.index, 0);
         assert_eq!(block.nonce, 0);
         assert_eq!(block.previous_hash, None);

@@ -1,4 +1,4 @@
-mod block;
-mod blockchain;
-mod transaction;
-mod transaction_pool;
+pub(crate) mod block;
+pub(crate) mod blockchain;
+pub(crate) mod transaction;
+pub(crate) mod transaction_pool;

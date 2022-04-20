@@ -28,10 +28,8 @@ impl TransactionPool {
 
     // Returns a copy of all transactions and empties the pool
     // This operation is safe to be called concurrently from multiple threads
+    // because its protected by Arc<Mutex>
     pub fn pop(&self) -> TransactionVec {
-        // the "transactions" attribute is protected by a Mutex
-        // so only one thread at a time can access the value when the lock is held
-        // preventing inconsistencies when adding new transactions while a pop is in course
         let mut transactions = self.transactions.lock().unwrap();
         let transactions_clone = transactions.clone();
         transactions.clear();
