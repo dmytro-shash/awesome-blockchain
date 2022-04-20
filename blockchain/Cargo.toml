@@ -16,3 +16,5 @@ thiserror = "1.0"
 hex = "0.4.2"
 project-root = "0.2.2"
 crossbeam = "0.8.1"
+actix-web = "4.0.1"
+ctrlc = { version = "3.0", features = ["termination"] }

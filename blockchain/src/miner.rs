@@ -122,3 +122,158 @@ impl Miner {
         Block::new(index, nonce, Some(previous_hash), transactions)
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::types::block::BlockHash;
+    use crate::types::transaction::Transaction;
+
+    // We use SHA 256 hashes
+    const MAX_DIFFICULTY: u32 = 256;
+
+    #[test]
+    fn test_create_next_block() {
+        let miner = create_default_miner();
+        let block = create_empty_block();
+
+        let next_block = miner.create_next_block(&block, Vec::new(), 0);
+
+        // the next block must follow the previous one
+        assert_eq!(next_block.index, block.index + 1);
+        assert_eq!(next_block.previous_hash.unwrap(), block.hash);
+    }
+
+
+    #[test]
+    fn test_mine_block_found() {
+        // let's use a small difficulty target for fast testing
+        let difficulty = 1;
+
+        // this should be more than enough nonce's to find a block with only 1 zero
+        let max_nonce = 1_000;
+
+        // check that the block is mined
+        let miner = create_miner(difficulty, max_nonce);
+        let last_block = create_empty_block();
+        let result = miner.mine_block(&last_block, Vec::new());
+        assert!(result.is_some());
+
+        // check that the block is valid
+        let mined_block = result.unwrap();
+        assert_mined_block_is_valid(&mined_block, &last_block, difficulty);
+    }
+
+    #[test]
+    fn test_mine_block_not_found() {
+        // let's use a high difficulty target to never find a block
+        let difficulty = MAX_DIFFICULTY;
+
+        // with a max_nonce so low, we will never find a block
+        // and also the test will end fast
+        let max_nonce = 10;
+
+        // check that the block is not mined
+        let miner = create_miner(difficulty, max_nonce);
+        let last_block = create_empty_block();
+        let result = miner.mine_block(&last_block, Vec::new());
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_run_block_found() {
+        // with a max_nonce so high and difficulty so low
+        // we will always find a valid block
+        let difficulty = 1;
+        let max_nonce = 1_000_000;
+        let miner = create_miner(difficulty, max_nonce);
+
+        let blockchain = miner.blockchain.clone();
+        let transaction_pool = miner.transaction_pool.clone();
+
+        add_mock_transaction(&transaction_pool);
+        let result = miner.run();
+
+        // mining should be successful
+        assert!(result.is_ok());
+
+        // a new block should have been added to the blockchain
+        let blocks = blockchain.get_all_blocks();
+        assert_eq!(blocks.len(), 2);
+        let genesis_block = &blocks[0];
+        let mined_block = &blocks[1];
+
+        // the mined block must be valid
+        assert_mined_block_is_valid(mined_block, genesis_block, blockchain.difficulty);
+
+        // the mined block must include the transaction added previously
+        let mined_transactions = &mined_block.transactions;
+        assert_eq!(mined_transactions.len(), 1);
+
+        // the transaction pool must be empty
+        // because the transaction was added to the block when mining
+        let transactions = transaction_pool.pop();
+        assert!(transactions.is_empty());
+    }
+
+    #[test]
+    #[should_panic(expected = "No valid block was mined at index `1`")]
+    fn test_run_block_not_found() {
+        // with a max_nonce so low and difficulty so high
+        // we will never find a valid block
+        let difficulty = MAX_DIFFICULTY;
+        let max_nonce = 1;
+        let miner = create_miner(difficulty, max_nonce);
+
+        let transaction_pool = &miner.transaction_pool;
+        add_mock_transaction(transaction_pool);
+
+        // mining should return a BlockNotMined error
+        miner.run().unwrap();
+    }
+
+    fn create_default_miner() -> Miner {
+        let difficulty = 1;
+        let max_nonce = 1;
+        create_miner(difficulty, max_nonce)
+    }
+
+    fn create_miner(difficulty: u32, max_nonce: u64) -> Miner {
+        let max_blocks = 1;
+        let tx_waiting_ms = 1;
+
+        let blockchain = Blockchain::new(difficulty);
+        let transaction_pool = TransactionPool::new();
+
+        Miner {
+            max_blocks,
+            max_nonce,
+            tx_waiting_ms,
+            blockchain,
+            transaction_pool,
+            target: difficulty,
+        }
+    }
+
+    fn create_empty_block() -> Block {
+        return Block::new(0, 0, Some(BlockHash::default()), Vec::new());
+    }
+
+    fn add_mock_transaction(pool: &TransactionPool) {
+        let transaction = Transaction {
+            sender: "1".to_string(),
+            recipient: "2".to_string(),
+            amount: 3,
+        };
+        pool.add_transaction(transaction.clone());
+    }
+
+    fn assert_mined_block_is_valid(mined_block: &Block, previous_block: &Block, difficulty: u32) {
+        assert_eq!(mined_block.index, previous_block.index + 1);
+        assert_eq!(mined_block.previous_hash.as_ref().unwrap(), &previous_block.hash);
+        assert!(mined_block.hash.starts_with(&"0".repeat(difficulty as usize)));
+    }
+}
+

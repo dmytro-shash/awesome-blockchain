@@ -2,6 +2,6 @@
   "port": 8000,
   "max_blocks": 0,
   "max_nonce": 1000000,
-  "difficulty": 2,
+  "difficulty": 1,
   "tx_waiting_ms": 10000
 }
