@@ -1,4 +1,4 @@
-use crate::types::block::{Block, BlockHash};
+use crate::types::block::Block;
 use anyhow::Result;
 use std::sync::{Arc, Mutex};
 use thiserror::Error;
@@ -38,8 +38,8 @@ impl Blockchain {
         let genesis_block = Blockchain::create_genesis_block();
 
         // add the genesis block to the synced vec of blocks
-        let mut blocks = vec![];
-        blocks.push(genesis_block);
+        let blocks = vec![genesis_block];
+
         let synced_blocks = Arc::new(Mutex::new(blocks));
 
         Blockchain {
@@ -82,7 +82,10 @@ impl Blockchain {
         }
 
         // check that the target is correct
-        if !block.hash.starts_with(&"0".repeat(self.difficulty as usize)) {
+        if !block
+            .hash
+            .starts_with(&"0".repeat(self.difficulty as usize))
+        {
             return Err(BlockchainError::InvalidDifficulty.into());
         }
 

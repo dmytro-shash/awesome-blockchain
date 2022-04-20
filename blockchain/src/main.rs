@@ -1,13 +1,13 @@
+mod miner;
 mod types;
 mod util;
-mod miner;
 
-use util::context::Context;
-use util::config::Config;
 use crate::miner::Miner;
 use crate::types::blockchain::Blockchain;
 use crate::types::transaction_pool::TransactionPool;
 use crate::util::execution;
+use util::config::Config;
+use util::context::Context;
 
 fn main() {
     // reading config from config.json

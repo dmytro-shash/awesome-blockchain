@@ -1,18 +1,17 @@
-use log::{error, info};
-use crate::{Blockchain, Context, TransactionPool};
-use crate::types::block::{Block, BlockHash};
+use crate::types::block::Block;
 use crate::types::transaction_pool::TransactionVec;
+use crate::{Blockchain, Context, TransactionPool};
+use log::{error, info};
 
+use crate::util::execution::{sleep_millis, Runnable};
 use anyhow::Result;
 use thiserror::Error;
-use crate::util::execution::{Runnable, sleep_millis};
 
 #[derive(Error, Debug)]
 pub enum MinerError {
     #[error("No valid block was mined at index `{0}`")]
     BlockNotMined(u64),
 }
-
 
 pub struct Miner {
     max_blocks: u64,
@@ -29,7 +28,6 @@ impl Runnable for Miner {
     }
 }
 
-
 impl Miner {
     pub fn new(context: &Context) -> Miner {
         Miner {
@@ -42,11 +40,10 @@ impl Miner {
         }
     }
 
-
     // Try to constantly calculate and append new valid blocks to the blockchain,
     // including all pending transactions in the transaction pool each time
     pub fn start(&self) -> Result<()> {
-        println!(
+        info!(
             "start mining with difficulty {}",
             self.blockchain.difficulty
         );
@@ -55,7 +52,7 @@ impl Miner {
         let mut block_counter = 0;
         loop {
             if self.must_stop_mining(block_counter) {
-                println!("block limit reached, stopping mining");
+                info!("block limit reached, stopping mining");
                 return Ok(());
             }
 
@@ -73,7 +70,7 @@ impl Miner {
             let mining_result = self.mine_block(&last_block, transactions.clone());
             match mining_result {
                 Some(block) => {
-                    println!("valid block found for index {}", block.index);
+                    info!("valid block found for index {}", block.index);
                     self.blockchain.add_block(block.clone())?;
                     block_counter += 1;
                 }
@@ -91,7 +88,6 @@ impl Miner {
         self.max_blocks > 0 && block_counter >= self.max_blocks
     }
 
-
     // Tries to find the next valid block of the blockchain
     // It will create blocks with different "nonce" values until one has a hash that matches the difficulty
     // Returns either a valid block (that satisfies the difficulty) or "None" if no block was found
@@ -100,7 +96,10 @@ impl Miner {
             let next_block = self.create_next_block(last_block, transactions.clone(), nonce);
 
             // A valid block must have a hash with enough starting zeroes with represents as target
-            if next_block.hash.starts_with(&"0".repeat(self.target as usize)) {
+            if next_block
+                .hash
+                .starts_with(&"0".repeat(self.target as usize))
+            {
                 return Some(next_block);
             }
         }

@@ -1,21 +1,15 @@
-use std::env;
 use serde::Deserialize;
+use std::env;
 
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-type StringVec = Vec<String>;
-
 #[derive(Debug, Deserialize)]
 pub struct Config {
     // Networking settings
     pub port: u16,
-
-    // Peer settings
-    pub peers: String,
-    pub peer_sync_ms: u64,
 
     // Miner settings
     pub max_blocks: u64,
@@ -23,7 +17,6 @@ pub struct Config {
     pub difficulty: u32,
     pub tx_waiting_ms: u64,
 }
-
 
 impl Config {
     pub fn read_config_from_file<P: AsRef<Path>>(path: P) -> Result<Config, Box<dyn Error>> {
@@ -39,11 +32,10 @@ impl Config {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use std::env;
     use super::*;
+    use std::env;
 
     #[test]
     fn successful_json_read() {
@@ -62,4 +54,3 @@ mod tests {
         let u = Config::read_config_from_file(json_path.into_boxed_path()).unwrap();
     }
 }
-

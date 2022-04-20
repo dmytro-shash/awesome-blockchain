@@ -1,7 +1,5 @@
 {
   "port": 8000,
-  "peers": "http://localhost:8001",
-  "peer_sync_ms": 10000,
   "max_blocks": 0,
   "max_nonce": 1000000,
   "difficulty": 2,

@@ -1,8 +1,7 @@
-use anyhow::Result;
-use std::time;
-use crossbeam::thread;
 use crate::Miner;
-
+use anyhow::Result;
+use crossbeam::thread;
+use std::time;
 
 pub trait Runnable: Sync + 'static {
     fn run(&self) -> Result<()>;
@@ -16,7 +15,7 @@ pub fn run_in_parallel(runnables: Vec<Miner>) {
             });
         }
     })
-        .unwrap();
+    .unwrap();
 }
 
 // Suspend the execution of the thread by a particular amount of milliseconds
