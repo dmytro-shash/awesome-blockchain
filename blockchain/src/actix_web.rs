@@ -3,8 +3,8 @@ use crate::types::block::Block;
 use crate::types::transaction::Transaction;
 use crate::{Blockchain, Context, TransactionPool};
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+
 use anyhow::Result;
-use log::info;
 
 struct ServerData {
     blockchain: Blockchain,
@@ -19,10 +19,10 @@ pub struct Server {
 
 impl Runnable for Server {
     fn run(&self) -> Result<()> {
-        let api_blockchain = self.blockchain.clone();
-        let api_pool = self.pool.clone();
+        let server_blockchain = self.blockchain.clone();
+        let server_transaction_pool = self.pool.clone();
 
-        start_blockchain_server(self.port, api_blockchain, api_pool)
+        start_blockchain_server(self.port, server_blockchain, server_transaction_pool)
     }
 }
 
@@ -35,6 +35,7 @@ impl Server {
         }
     }
 }
+
 
 #[actix_web::main]
 async fn start_blockchain_server(
@@ -50,9 +51,14 @@ async fn start_blockchain_server(
     HttpServer::new(move || {
         App::new()
             .app_data(server_data.clone())
-            .route("/blocks/all", web::get().to(get_blocks))
-            .route("/block/add", web::post().to(add_block))
-            .route("/transactions/new/{from}/{to}/{amount}", web::post().to(add_transaction))
+            .route("/blocks", web::get().to(get_blocks))
+            .route("/blocks", web::post().to(add_block))
+            .route("/blocks/get/{index}", web::get().to(get_block_by_index))
+            .route("/tx/pool", web::get().to(get_transactions))
+            .route(
+                "/tx/new/{from}/{to}/{amount}",
+                web::get().to(add_transaction),
+            )
     })
         .bind(url)
         .unwrap()
@@ -69,13 +75,21 @@ async fn get_blocks(state: web::Data<ServerData>) -> impl Responder {
     HttpResponse::Ok().json(&blocks)
 }
 
+async fn get_block_by_index(state: web::Data<ServerData>, index: web::Path<u64>) -> impl Responder {
+    let blockchain = &state.blockchain;
+
+    HttpResponse::Ok().json(&blockchain.get_block_by_index(index.into_inner()))
+}
+
+async fn get_transactions(state: web::Data<ServerData>) -> impl Responder {
+    let transactions = &state.pool.pop();
+    HttpResponse::Ok().json(&transactions)
+}
+
 // Adds a new block to the blockchain
-async fn add_block(state: web::Data<ServerData>, block_json: web::Json<Block>) -> HttpResponse {
+async fn add_block(state: web::Data<ServerData>, block_json: web::Json<Block>) -> impl Responder {
     let mut block = block_json.into_inner();
 
-    // The hash of the block is mandatory and the blockchain checks if it's correct
-    // That's a bit inconvenient for manual use of the API
-    // So we ignore the coming hash and recalculate it again before adding to the blockchain
     block.hash = block.calculate_hash();
 
     let blockchain = &state.blockchain;
@@ -83,18 +97,16 @@ async fn add_block(state: web::Data<ServerData>, block_json: web::Json<Block>) -
 
     match result {
         Ok(_) => {
-            info!("Received new block {}", block.index);
             HttpResponse::Ok().finish()
         }
         Err(error) => HttpResponse::BadRequest().body(error.to_string()),
     }
 }
 
-// Adds a new transaction to the pool, to be included on the next block
 async fn add_transaction(
     state: web::Data<ServerData>,
     transaction: web::Path<(String, String, u64)>,
-) -> impl Responder {
+) -> String {
     let (sender, recipient, amount) = transaction.into_inner();
 
     let transaction = Transaction {
@@ -102,9 +114,8 @@ async fn add_transaction(
         recipient,
         amount,
     };
-
     let pool = &state.pool;
     pool.add_transaction(transaction.clone());
 
-    HttpResponse::Ok().json(&transaction)
+    format!("new transaction {:?}!", transaction)
 }

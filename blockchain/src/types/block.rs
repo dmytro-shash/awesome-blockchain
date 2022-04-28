@@ -16,7 +16,7 @@ pub struct Block {
 }
 
 impl Block {
-    // Create a brand new block. The hash value will be caclulated and set automatically.
+    // Create a new block. The hash value will be calculated and set automatically.
     pub fn new(
         index: u64,
         nonce: u64,

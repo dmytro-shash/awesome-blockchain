@@ -1,5 +1,4 @@
 use crate::types::transaction::Transaction;
-use log::info;
 use std::sync::{Arc, Mutex};
 
 pub type TransactionVec = Vec<Transaction>;
@@ -23,18 +22,14 @@ impl TransactionPool {
     pub fn add_transaction(&self, transaction: Transaction) {
         let mut transactions = self.transactions.lock().unwrap();
         transactions.push(transaction);
-        info!("transaction added");
     }
 
-    // Returns a copy of all transactions and empties the pool
-    // This operation is safe to be called concurrently from multiple threads
-    // because its protected by Arc<Mutex>
+    // Returns a copy of all transactions
     pub fn pop(&self) -> TransactionVec {
         let mut transactions = self.transactions.lock().unwrap();
-        let transactions_clone = transactions.clone();
+        let cloned_transaction = transactions.clone();
         transactions.clear();
-
-        transactions_clone
+        cloned_transaction
     }
 }
 
@@ -67,13 +62,9 @@ mod tests {
         transaction_pool.add_transaction(transaction.clone());
 
         // pop the values and check that the transaction is included
-        let mut transactions = transaction_pool.pop();
+        let transactions = transaction_pool.pop();
         assert_eq!(transactions.len(), 1);
         assert_eq!(transactions[0].amount, transaction.amount);
-
-        // after the previous pop, the pool should still be empty
-        transactions = transaction_pool.pop();
-        assert!(transactions.is_empty());
     }
 
     #[test]
@@ -87,13 +78,9 @@ mod tests {
         transaction_pool.add_transaction(transaction_b.clone());
 
         // pop the values and check that the transactions are included
-        let mut transactions = transaction_pool.pop();
+        let transactions = transaction_pool.pop();
         assert_eq!(transactions.len(), 2);
         assert_eq!(transactions[0].amount, transaction_a.amount);
         assert_eq!(transactions[1].amount, transaction_b.amount);
-
-        // after the previous pop, the pool should still be empty
-        transactions = transaction_pool.pop();
-        assert!(transactions.is_empty());
     }
 }

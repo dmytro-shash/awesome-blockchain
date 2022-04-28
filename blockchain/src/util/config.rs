@@ -51,6 +51,6 @@ mod tests {
     fn wrong_json_name() {
         let json_path = env::current_dir().unwrap().join("WRONG_config.json");
 
-        let u = Config::read_config_from_file(json_path.into_boxed_path()).unwrap();
+        Config::read_config_from_file(json_path.into_boxed_path()).unwrap();
     }
 }

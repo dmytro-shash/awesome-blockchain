@@ -1,7 +1,7 @@
 {
   "port": 8000,
-  "max_blocks": 0,
+  "max_blocks": 120,
   "max_nonce": 1000000,
-  "difficulty": 1,
+  "difficulty": 4,
   "tx_waiting_ms": 10000
 }

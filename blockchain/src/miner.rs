@@ -70,13 +70,11 @@ impl Miner {
             let mining_result = self.mine_block(&last_block, transactions.clone());
             match mining_result {
                 Some(block) => {
-                    info!("valid block found for index {}", block.index);
-                    self.blockchain.add_block(block.clone())?;
+                    self.blockchain.add_block(block.clone()).unwrap();
                     block_counter += 1;
                 }
                 None => {
                     let index = last_block.index + 1;
-                    error!("no valid block was found for index {}", index);
                     return Err(MinerError::BlockNotMined(index).into());
                 }
             }
@@ -123,7 +121,6 @@ impl Miner {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -145,7 +142,6 @@ mod tests {
         assert_eq!(next_block.index, block.index + 1);
         assert_eq!(next_block.previous_hash.unwrap(), block.hash);
     }
-
 
     #[test]
     fn test_mine_block_found() {
@@ -272,8 +268,12 @@ mod tests {
 
     fn assert_mined_block_is_valid(mined_block: &Block, previous_block: &Block, difficulty: u32) {
         assert_eq!(mined_block.index, previous_block.index + 1);
-        assert_eq!(mined_block.previous_hash.as_ref().unwrap(), &previous_block.hash);
-        assert!(mined_block.hash.starts_with(&"0".repeat(difficulty as usize)));
+        assert_eq!(
+            mined_block.previous_hash.as_ref().unwrap(),
+            &previous_block.hash
+        );
+        assert!(mined_block
+            .hash
+            .starts_with(&"0".repeat(difficulty as usize)));
     }
 }
-
