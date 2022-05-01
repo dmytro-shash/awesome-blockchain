@@ -47,7 +47,7 @@ respectively.
 
 ```
   {
-     "port": port your want to run your app
+     "port": port your want to run your app ( i chose 8000 )
      "max_blocks": max block can be produced in blockchain (0 for unlimited)
      "max_nonce": max number for miner to go through and try to produce new valid block
      "difficulty": number of 0 to match in hash to consider the block is valid and added to blockchain
